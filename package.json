@@ -9,6 +9,8 @@
     "check-types": "turbo run check-types"
   },
   "devDependencies": {
+    "browserslist": "^4.28.6",
+    "caniuse-lite": "^1.0.30001805",
     "prettier": "^3.7.4",
     "turbo": "^2.10.4",
     "typescript": "5.9.2"
@@ -25,5 +27,8 @@
   "workspaces": [
     "apps/*",
     "packages/*"
-  ]
+  ],
+  "dependencies": {
+    "bcrypt": "^6.0.0"
+  }
 }

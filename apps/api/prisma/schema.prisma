@@ -1,0 +1,580 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // url      = env("DATABASE_URL")
+}
+
+// ====================== UTILISATEURS  ======================
+model User {
+  id            Int      @id @default(autoincrement())
+  matricule     String?  @unique
+  nom           String
+  prenom        String
+  email         String   @unique
+  password      String?
+  googleId      String?  @unique
+  avatar        String?
+  role          Role     @default(AGENT)
+  isActive      Boolean  @default(true)
+  provider      AuthProvider @default(EMAIL)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  validations           Validation[]
+  auditLogs             AuditLog[]
+  notifications         Notification[]
+  travauxCreated        Travaux[]              @relation("TravauxCreatedBy")
+  historiqueTravaux     HistoriqueTravaux[]
+  quitusCreated         Quitus[]
+  attestationsCreated   Attestation[]
+  piecesJointes         PieceJointe[]
+}
+
+// ====================== OCCUPANTS (Fonctionnaires / Bénéficiaires / Demandeurs) ======================
+model Occupant {
+  occupanId       Int       @id @default(autoincrement())
+  matricule       String    @unique          // Matricule Solde (ex: 123.456)
+  nom             String
+  prenom          String
+  cin             String?   @unique
+  telephone       String?
+  email           String?
+  ministere       String?                    // Ex: Ministère de l'Éducation Nationale
+  fonction        String?                    // Ex: Enseignant, Inspecteur, Directeur...
+  codeMinistere   String?                    // Ex: 63-MINISTERE DES TRANSPORTS...
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  demandes        Demande[]
+  occupations     Occupation[]
+  baux            Bail[]
+  quitus          Quitus[]
+  attestations    Attestation[]
+}
+
+// ====================== BIENS ======================
+model Bien {
+  numeroBien          String          @id                    // N° inventaire unique (clé primaire)
+  nomDuBien           String
+  typeBien            TypeBien
+  utilisateurDuBien   String?
+  nature              NatureBien?                            // Bureau / Logement / Bureau-logement
+  adresse             String
+  localite            String?                                // District / Commune / Fokontany                               // Certificat d'Immatriculation et de Situation Juridique
+  etatBatisse         EtatBatisse     @default(BON)
+  statut              StatutBien      @default(LIBRE)
+  photos              String[]
+  description         String?
+  dateAcquisition     DateTime?
+
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  // Relations
+  occupations         Occupation[]
+  baux                Bail[]
+  demandes            Demande[]
+  travaux             Travaux[]
+  quitus              Quitus[]
+  piecesJointes       PieceJointe[]
+}
+
+// ====================== DEMANDES (générique - point d'entrée de la plupart des processus) ======================
+model Demande {
+  reference         String          @id                      // Ex: DEM-2026-0001
+  typeDemande       TypeDemande
+  statut            StatutDemande   @default(EN_ATTENTE)
+  motif             String?
+  description       String?
+  dateValidation    DateTime?
+
+  // Relations
+  demandeurId       Int
+  demandeur         Occupant        @relation(fields: [demandeurId], references: [occupanId])
+
+  bienNumero        String?
+  bien              Bien?           @relation(fields: [bienNumero], references: [numeroBien])
+
+  createdById       Int?                                     // Agent SRB qui a créé la demande
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  validations       Validation[]
+  occupation        Occupation?
+  bail              Bail?
+  piecesJointes     PieceJointe[]
+}
+
+// ====================== OCCUPATION ======================
+model Occupation {
+  numeroOccupation    String            @id
+  dateEntree          DateTime
+  dateSortiePrevue    DateTime?                              // Calculée selon type de bien (1 mois ou 3 mois)
+  dateSortieReelle    DateTime?
+  statut              OccupationStatus  @default(EN_ATTENTE)
+  motifLiberation     String?
+  clesRestituees      Boolean           @default(false)
+  procedureJudiciaire Boolean           @default(false)      // Occupant sans titre / procédure en cours
+  delaiJouissanceMois Int?
+  dateAbrogationNomination DateTime?
+
+  // États des lieux (JSON flexible pour formulaire dynamique)
+  etatDesLieuxEntree  Json?
+  etatDesLieuxSortie  Json?
+
+  // Relations
+  bienNumero          String
+  bien                Bien              @relation(fields: [bienNumero], references: [numeroBien])
+
+  occupantId          Int?
+  occupant            Occupant?         @relation(fields: [occupantId], references: [occupanId])
+
+  demandeReference    String?           @unique
+  demande             Demande?          @relation(fields: [demandeReference], references: [reference])
+
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  validations         Validation[]
+}
+
+// ====================== BAUX À LOYER ======================
+model Bail {
+  numeroBail          String        @id
+  dateDebut           DateTime
+  dateFin             DateTime
+  montantLoyer        Float?
+  statut              StatutBail    @default(EN_COURS)
+
+  // Suivi du circuit réglementaire (Section 6.5.3.1)
+  accordMef           Boolean?       @default(false)          // Accord préalable du MEF
+  refAccordMef        String?
+  dateAccordMef       DateTime?
+  visaCf              Boolean       @default(false)          // Visa Contrôle Financier
+  refVisaCf           String?
+  dateVisaCf          DateTime?
+  approbationSrb      Boolean       @default(false)          // Approbation Chef SRB / DPE
+  enregistreFiscal    Boolean       @default(false)          // Enregistrement fiscal
+  refEnregistrementFiscal String?
+  dateEnregistrementFiscal DateTime?
+
+  // Informations du Bailleur Privé (Section 6.5.3.2)
+  nomBailleur         String?
+  nifBailleur         String?
+  statBailleur        String?
+  ribBailleur         String?
+
+  dateAbrogationNomination DateTime?
+
+  checklistData       Json?
+
+  contratPdfUrl       String?
+
+  // Relations
+  bienNumero          String
+  bien                Bien          @relation(fields: [bienNumero], references: [numeroBien])
+
+  locataireId         Int
+  locataire           Occupant      @relation(fields: [locataireId], references: [occupanId])
+
+  demandeReference    String?       @unique
+  demande             Demande?      @relation(fields: [demandeReference], references: [reference])
+
+  avenants            Avenant[]
+  piecesJointes       PieceJointe[]
+
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+model Avenant {
+  id                String        @id @default(cuid())
+  numeroAvenant     String        @unique
+  dateAvenant       DateTime      @default(now())
+  typeAvenant       TypeAvenant
+  description       String?
+  ancienMontant     Float?
+  nouveauMontant    Float?
+  ancienneDateFin   DateTime?
+  nouvelleDateFin   DateTime?
+  fichierPdfUrl     String?
+
+  bailNumero        String
+  bail              Bail          @relation(fields: [bailNumero], references: [numeroBail])
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+}
+
+// ====================== VALIDATIONS (circuit multi-niveaux flexible) ======================
+model Validation {
+  refValidation     String            @id @default(cuid())
+  niveau            Int               // 1, 2, 3...
+  typeValidation    String?           // "HIERARCHIQUE", "CF", "SRB", "MEF", etc.
+  statut            StatutValidation  @default(EN_ATTENTE)
+  commentaire       String?
+  dateValidation    DateTime?
+
+  // Qui valide
+  valideurId        Int
+  valideur          User              @relation(fields: [valideurId], references: [id])
+
+  // Lié à une Demande et/ou une Occupation
+  demandeReference  String?
+  demande           Demande?          @relation(fields: [demandeReference], references: [reference])
+
+  occupationId      String?
+  occupation        Occupation?       @relation(fields: [occupationId], references: [numeroOccupation])
+
+  createdAt         DateTime          @default(now())
+}
+
+// ====================== RECENSEMENT ANNUEL ======================
+model CampagneRecensement {
+  id              String          @id @default(cuid())
+  annee           Int             @unique
+  dateOuverture   DateTime
+  dateCloture     DateTime?                           // Généralement 30 juin
+  statut          StatutCampagne  @default(OUVERTE)
+  description     String?
+
+  quitus          Quitus[]
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+}
+
+model Quitus {
+  id                    String        @id @default(cuid())
+  reference             String        @unique                // Ex: QUITUS-2026-00123
+  annee                 Int
+  statut                StatutQuitus  @default(BROUILLON)
+  etatBatiment          EtatBatisse?
+  observations          String?
+  pdfUrl                String?
+  donneesSnapshot       Json?         // Snapshot des données au moment du recensement
+
+  // Relations
+  bienNumero            String
+  bien                  Bien          @relation(fields: [bienNumero], references: [numeroBien])
+
+  occupantId            Int?
+  occupant              Occupant?     @relation(fields: [occupantId], references: [occupanId])
+
+  campagneId            String
+  campagne              CampagneRecensement @relation(fields: [campagneId], references: [id])
+
+  createdById           Int
+  createdBy             User          @relation(fields: [createdById], references: [id])
+
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@unique([bienNumero, annee])
+}
+
+model SyntheseRecensement {
+  id          String   @id @default("utilisation-biens")
+  libelle     String
+  bureaux     Int
+  logements   Int
+  autres      Int
+  total       Int
+  source      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ====================== TRAVAUX / RÉHABILITATIONS ======================
+model Travaux {
+  id                    String          @id @default(cuid())
+  reference             String          @unique              // Ex: TRAV-2026-001
+  typeTravaux           TypeTravaux
+  dateDebutPrevue       DateTime
+  dateFinPrevue         DateTime
+  dateDebutReelle       DateTime?
+  dateFinReelle         DateTime?
+  montantEstimatif      Float?
+  montantReel           Float?
+  statut                StatutTravaux   @default(EN_ATTENTE)
+  avancementPourcent    Int             @default(0)          // 0 à 100
+  referenceDevis        String?
+  observations          String?
+
+  // Conformité réglementaire (Circulaire N°813)
+  quitusN1Present       Boolean         @default(false)      // Vérifié automatiquement
+  autorisationDpe       Boolean         @default(false)      // Si modification structurelle
+
+  // Relations
+  bienNumero            String
+  bien                  Bien            @relation(fields: [bienNumero], references: [numeroBien])
+
+  createdById           Int
+  createdBy             User            @relation("TravauxCreatedBy", fields: [createdById], references: [id])
+
+  historique            HistoriqueTravaux[]
+  piecesJointes         PieceJointe[]
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+}
+
+model HistoriqueTravaux {
+  id              String   @id @default(cuid())
+  action          String                                 // AVANCEMENT, STATUT, COMMENTAIRE...
+  ancienValeur    String?
+  nouvelleValeur  String?
+  commentaire     String?
+
+  travauxId       String
+  travaux         Travaux  @relation(fields: [travauxId], references: [id])
+
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+
+  createdAt       DateTime @default(now())
+}
+
+// ====================== ATTESTATIONS ======================
+// ====================== ATTESTATIONS ======================
+model Attestation {
+  id                String              @id @default(cuid())
+  reference         String              @unique
+  typeAttestation   TypeAttestation
+  statut            StatutAttestation   @default(BROUILLON)
+  contenu           Json?                                  // Données dynamiques (déclaration sur l'honneur, etc.)
+  pdfUrl            String?
+  dateGeneration    DateTime?
+  visaSuperieur     Boolean             @default(false)    // Visa du Supérieur hiérarchique (Section 6.5.2)
+  declarationHonneurLegalisee Boolean   @default(false)    // Déclaration sur l'honneur Annexe 39 légalisée
+
+  demandeurId       Int
+  demandeur         Occupant            @relation(fields: [demandeurId], references: [occupanId])
+
+  createdById       Int
+  createdBy         User                @relation(fields: [createdById], references: [id])
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+}
+
+// ====================== NOTIFICATIONS ======================
+model Notification {
+  id          String            @id @default(cuid())
+  titre       String
+  message     String
+  type        TypeNotification
+  lu          Boolean           @default(false)
+  lien        String?                                      // Lien vers la ressource concernée
+
+  userId      Int
+  user        User              @relation(fields: [userId], references: [id])
+
+  createdAt   DateTime          @default(now())
+}
+
+// ====================== PIÈCES JOINTES (centralisé) ======================
+model PieceJointe {
+  id            String   @id @default(cuid())
+  nomFichier    String
+  url           String           // chemin relatif ou URL MinIO/S3
+  typeMime      String?
+  taille        Int?
+  typePiece     TypePieceJointe? // mieux qu'un String libre
+  dateEmission  DateTime?
+  valide        Boolean  @default(true)
+  // Checklist IA (plus tard)
+  // checklistIa   Json?            // { detecte, score, statut: PRESENT|MANQUANT|ILLISIBLE }
+
+  bienNumero    String?
+  bien          Bien?     @relation(fields: [bienNumero], references: [numeroBien])
+
+  demandeRef    String?
+  demande       Demande?  @relation(fields: [demandeRef], references: [reference])
+
+  bailNumero    String?
+  bail          Bail?     @relation(fields: [bailNumero], references: [numeroBail])
+
+  travauxId     String?
+  travaux       Travaux?  @relation(fields: [travauxId], references: [id])
+
+  uploadedById  Int?
+  uploadedBy    User?     @relation(fields: [uploadedById], references: [id])
+
+  createdAt     DateTime  @default(now())
+}
+
+// ====================== AUDIT LOG (traçabilité judiciaire) ======================
+model AuditLog {
+  id          String   @id @default(cuid())
+  action      String
+  entite      String
+  entiteId    String?
+  details     Json?
+
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id])
+
+  createdAt   DateTime @default(now())
+}
+
+// ====================== ENUMS ======================
+enum AuthProvider {
+  EMAIL
+  GOOGLE
+}
+
+enum Role {
+  AGENT
+  CHEF_SRB
+  ADMINISTRATEUR
+}
+
+enum TypeBien {
+  HOTEL_MINISTERIEL
+  LOGEMENT_FONCTION
+  SOCIAL_ECONOMIQUE
+  BUREAU
+}
+
+enum NatureBien {
+  BUREAU
+  LOGEMENT
+  BUREAU_LOGEMENT
+}
+
+enum StatutBien {
+  LIBRE
+  OCCUPE
+  EN_LIBERATION
+  EN_TRAVAUX
+}
+
+enum TypeDemande {
+  OCCUPATION
+  LIBERATION
+  BAIL
+  ATTESTATION
+  RECENSEMENT
+  TRAVAUX
+}
+
+enum StatutDemande {
+  EN_ATTENTE
+  EN_COURS
+  VALIDEE
+  REJETEE
+  TERMINEE
+}
+
+enum OccupationStatus {
+  EN_ATTENTE
+  EN_VALIDATION
+  APPROUVE
+  EN_COURS
+  FIN_PROCHE
+  DEMANDE_LIBERATION
+  LIBERATION_VALIDEE
+  LIBERE
+  SANS_TITRE
+}
+
+enum StatutBail {
+  EN_ATTENTE_MEF
+  VISA_CF_SOUMIS
+  VISA_CF_VALIDE
+  EN_COURS
+  TERMINE
+  RENOUVELE
+  RESILIE
+}
+
+enum TypeAvenant {
+  MODIFICATION_LOYER
+  PROLONGATION_DUREE
+  CHANGEMENT_CLAUSE
+  AUTRE
+}
+
+enum StatutValidation {
+  EN_ATTENTE
+  VALIDEE
+  REJETEE
+}
+
+enum EtatBatisse {
+  BON
+  MOYEN
+  MAUVAIS
+}
+
+enum StatutCampagne {
+  OUVERTE
+  CLOTUREE
+  ARCHIVEE
+}
+
+enum StatutQuitus {
+  BROUILLON
+  VALIDE
+  GENERE
+}
+
+enum TypeTravaux {
+  ENTRETIEN
+  REHABILITATION
+  AMENAGEMENT
+  CONSTRUCTION_NOUVELLE
+}
+
+enum StatutTravaux {
+  EN_ATTENTE
+  EN_COURS
+  TERMINE
+  SUSPENDU
+  ANNULE
+}
+
+enum TypeAttestation {
+  NON_LOGEMENT
+  NON_OCCUPATION
+}
+
+enum StatutAttestation {
+  BROUILLON
+  VALIDEE
+  GENERE
+  ARCHIVEE
+}
+
+enum TypeNotification {
+  ALERTE_DELAI
+  VALIDATION
+  RETARD_TRAVAUX
+  RECENSEMENT
+  ANOMALIE
+  SYSTEME
+}
+
+enum TypePieceJointe {
+  // Occupation
+  DEMANDE_MANUSCRITE
+  ACTE_NOMINATION
+  CNI
+  ATTESTATION_NON_LOGEMENT
+  FICHE_FAMILLE
+  // Libération
+  DEMANDE_LIBERATION
+  ACTE_MUTATION
+  DECISION_RETRAITE
+  ETAT_DES_LIEUX_SORTIE
+  RECU_CLES
+  // Commun
+  AUTRE
+  DOSSIER_SCANNE
+}
