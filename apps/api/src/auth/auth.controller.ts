@@ -22,7 +22,7 @@ export class AuthController {
     const authResponse = this.authService.generateAuthResponse(req.user);
 
     return {
-      url: `http://localhost:3000/auth/callback?token=${authResponse.access_token}&role=${authResponse.user.role}`,
+      url: `https://siglbahm-api.onrender.com/auth/callback?token=${authResponse.access_token}&role=${authResponse.user.role}`,
     };
   }
 
