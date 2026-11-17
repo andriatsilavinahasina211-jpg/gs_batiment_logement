@@ -78,7 +78,7 @@ function LoginForm() {
 
           {/* Social Google Login */}
           <div className={styles.socialButtons}>
-            <Link href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google`} className={styles.socialBtn}>
+            <Link href={`${process.env.NEXT_PUBLIC_API_URL}/auth/google/callback`} className={styles.socialBtn}>
               <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
               Se Connecter avec Google
             </Link>
