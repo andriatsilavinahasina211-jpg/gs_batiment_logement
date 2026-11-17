@@ -148,7 +148,7 @@ function toDateInput(value?: string | Date | null): string | undefined {
   }
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 function getAuthHeaders(): HeadersInit {
   const token =

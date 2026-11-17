@@ -15,7 +15,7 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000';
 const TOKEN_KEY = 'token';
 const USER_KEY = 'auth_user';
 

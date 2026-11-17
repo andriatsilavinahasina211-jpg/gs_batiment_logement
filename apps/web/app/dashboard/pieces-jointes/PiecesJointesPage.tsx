@@ -66,7 +66,7 @@ type PieceJointeAvecMeta = PieceJointe & {
 const buildPieceUrl = (url?: string | null) => {
   if (!url) return "#";
   if (/^https?:\/\//i.test(url)) return url;
-  const base = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+  const base = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
   const cleanBase = base.endsWith("/") ? base.slice(0, -1) : base;
   const cleanUrl = url.startsWith("/") ? url : `/${url}`;
   return `${cleanBase}${cleanUrl}`;

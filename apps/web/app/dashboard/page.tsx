@@ -84,7 +84,7 @@ function canAccess(role: string | undefined, key: string): boolean {
   return (ROLE_PERMISSIONS[role] ?? []).includes(key);
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 const BADGE_ENDPOINTS: Record<string, string> = {
   biens: "/dashboard/biens",

@@ -7,7 +7,7 @@ import type {
 } from "../types/demande";
 
 const API_URL = (
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 ).replace(/\/$/, "");
 
 function getAuthHeaders(): HeadersInit {

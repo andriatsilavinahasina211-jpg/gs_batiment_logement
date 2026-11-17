@@ -5,7 +5,7 @@ import { C } from "../shared/constants";
 import { Ic } from "../shared/icons";
 
 /* ───────────────── Config API NestJS ───────────────── */
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 /* ───────────────── Types ───────────────── */
 type TypeBien =
