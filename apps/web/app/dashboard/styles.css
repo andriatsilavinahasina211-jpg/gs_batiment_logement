@@ -702,3 +702,27 @@
   }
 }
 
+
+/* ── Gestion du bouton de fermeture (X) ── */
+
+/* 1️⃣ Sur les écrans larges (> 768 px) – le X n’est plus affiché */
+@media (min-width: 768px) {
+  .sidebar-toggle {
+    display: none !important;
+  }
+}
+
+/* 2️⃣ Sur les petits écrans (mobile) – le X reste visible, mais on enlève le
+   fond jaune qui l’encadre. */
+@media (max-width: 767px) {
+  .sidebar-toggle {
+    background: transparent;   /* supprime l’encadré jaune */
+    border: none;
+    padding: 0;
+  }
+
+  .sidebar-toggle svg {
+    /* garde uniquement l’icône, aucune couleur de fond supplémentaire */
+    fill: currentColor;
+  }
+}
