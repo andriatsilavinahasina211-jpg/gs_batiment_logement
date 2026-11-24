@@ -498,13 +498,13 @@ export default function Dashboard() {
         {/* Overlay mobile */}
         {sidebarOpen && (
           <div
-            className="db-overlay"
+            className="db-overlay open"
             onClick={() => setSidebarOpen(false)}
             style={{
               position: "fixed",
               inset: 0,
-              background: "rgba(15, 23, 42, 0.45)",
-              zIndex: 40,
+              background: "rgba(15, 23, 42, 0.5)",
+              zIndex: 90,
               backdropFilter: "blur(2px)",
             }}
           />
@@ -514,7 +514,6 @@ export default function Dashboard() {
       <aside
         className={`db-sidebar ${sidebarOpen ? "open" : ""}`}
         style={{
-          width: 210,
           background: C.sidebar,
           display: "flex",
           flexDirection: "column",
@@ -523,7 +522,16 @@ export default function Dashboard() {
           zIndex: 50,
         }}
       >
-        <div className="db-logo-area">
+        <div className="db-logo-area" style={{ position: "relative" }}>
+          <button
+            type="button"
+            className="db-sidebar-close-btn"
+            onClick={() => setSidebarOpen(false)}
+            title="Fermer le menu"
+            aria-label="Fermer le menu"
+          >
+            ✕
+          </button>
           <Image src="/logo_mef.png" alt="MEF Madagascar" width={56} height={56} style={{ objectFit: "contain" }} priority />
           <div className="db-logo-text-box">
             <div className="db-logo-text">GESTION DES BATIMENTS <br />ET LOGEMENTS ADMINISTRATIFS</div>
@@ -573,26 +581,32 @@ export default function Dashboard() {
             }}>
               {userInitials}
             </div>
-            <div style={{ minWidth: 0, overflow: "hidden" }}>
+            <div style={{ minWidth: 0, overflow: "hidden", flex: 1 }}>
               <div style={{
                 fontSize: 12, fontWeight: 700, color: C.text,
                 whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis"
               }}>
                 {userDisplayName}
               </div>
-              <div style={{ fontSize: 10.5, color: C.muted }}>
+              <div style={{ fontSize: 10.5, color: C.muted, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {getRoleLabel(currentUser?.role)}
               </div>
             </div>
           </div>
-          <button onClick={() => logoutUser()} className="db-sidebar-logout" title="Déconnexion">
+          <button
+            type="button"
+            onClick={() => logoutUser()}
+            className="db-sidebar-logout"
+            title="Déconnexion"
+            aria-label="Se déconnecter"
+          >
             <Ic.Logout />
           </button>
         </div>
       </aside>
 
       {/* MAIN CONTENT */}
-      <main style={{ flex: 1, overflow: "auto", padding: "24px 26px 30px" }}>
+      <main className="db-main" style={{ flex: 1, overflow: "auto" }}>
         {/* Header dynamique */}
         <div style={{
           display: "flex", alignItems: "center", justifyContent: "space-between",
@@ -600,19 +614,29 @@ export default function Dashboard() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
             <button
-              className="db-mobile-menu-btn"
-              onClick={() => setSidebarOpen(true)}
-              title="Menu"
+              type="button"
+              className={`db-mobile-menu-btn ${sidebarOpen ? "active" : ""}`}
+              onClick={() => setSidebarOpen((prev) => !prev)}
+              title={sidebarOpen ? "Fermer le menu" : "Menu"}
+              aria-label={sidebarOpen ? "Fermer le menu" : "Menu"}
               style={{
-                display: "none",
-                width: 42, height: 42, borderRadius: 10,
-                border: `1px solid ${C.border}`,
-                background: C.card,
-                alignItems: "center", justifyContent: "center",
-                cursor: "pointer", color: C.muted,
+                width: 42,
+                height: 42,
+                borderRadius: 10,
+                border: `1px solid ${sidebarOpen ? C.gold : C.border}`,
+                background: sidebarOpen ? "#fefce8" : C.card,
+                cursor: "pointer",
+                color: sidebarOpen ? C.goldDark : C.muted,
+                transition: "all 0.15s ease",
               }}
             >
-              <Ic.MenuDots />
+              {sidebarOpen ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              ) : (
+                <Ic.MenuDots />
+              )}
             </button>
 
             <CompanyAvatar />
