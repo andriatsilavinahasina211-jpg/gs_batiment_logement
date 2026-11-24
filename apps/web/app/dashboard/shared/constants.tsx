@@ -36,6 +36,6 @@ export const PAGE_TITLES: Record<string, { title: string; subtitle: string }> = 
   documents: { title: "Documents", subtitle: "Bibliothèque documentaire" },
   "pieces-jointes": { title: "Pièces jointes", subtitle: "Fichiers attachés aux dossiers" },
   audit: { title: "Audit", subtitle: "Journal des actions et traçabilité" },
-  ia: { title: "Intelligence IA", subtitle: "Assistant intelligent et analyses" },
+  ia: { title: "Assistant Intelligent", subtitle: "Assistant intelligent et analyses" },
   users: { title: "Utilisateurs", subtitle: "Gestion des comptes et droits d’accès" },
 };
