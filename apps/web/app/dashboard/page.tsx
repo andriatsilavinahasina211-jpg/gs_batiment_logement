@@ -529,6 +529,7 @@ export default function Dashboard() {
             onClick={() => setSidebarOpen(false)}
             title="Fermer le menu"
             aria-label="Fermer le menu"
+            style={{ display: "none" }}
           >
             ✕
           </button>

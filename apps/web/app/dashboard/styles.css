@@ -1,4 +1,4 @@
-﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    Palette MEF / DGBF â€” Styles Dashboard
    Or principal : #C9A227 | Or foncÃ© : #A67C00 | Or clair : #F5E6C8
    Vert   : #1a7a3c  |  Rouge : #be1e2d
@@ -705,20 +705,28 @@
 
 /* -- Bouton fermeture sidebar (X) -- */
 
-/* Desktop (>= 768px) : masquer completement le bouton X */
-@media (min-width: 768px) {
-  .db-sidebar-close-btn {
-    display: none !important;
-  }
+/* Par défaut : caché (desktop et tout écran large) */
+.db-sidebar-close-btn {
+  display: none !important;
 }
 
-/* Mobile (< 768px) : garder le X visible, sans fond jaune */
+/* Mobile (< 768px) : visible, sans fond jaune */
 @media (max-width: 767px) {
   .db-sidebar-close-btn {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
     background: transparent !important;
     border: none !important;
     padding: 4px !important;
     box-shadow: none !important;
     outline: none !important;
+    cursor: pointer;
+    font-size: 16px;
+    color: #334155;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    z-index: 10;
   }
 }
