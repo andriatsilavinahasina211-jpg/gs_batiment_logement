@@ -56,4 +56,9 @@ export class CreateAttestationDto {
   @IsOptional()
   @IsString()
   numeroOrdre?: string;
+
+  @ApiPropertyOptional({ example: 'DEM-2026-0001' })
+  @IsOptional()
+  @IsString()
+  demandeReference?: string;
 }

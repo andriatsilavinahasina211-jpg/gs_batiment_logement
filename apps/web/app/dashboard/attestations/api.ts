@@ -54,6 +54,9 @@ function normalize(a: any): Attestation {
   const type: TypeAttestation =
     a.typeAttestation === "NON_OCCUPATION" ? "NON_OCCUPATION" : "NON_LOGEMENT";
 
+  const contenu = a.contenu || {};
+  const isRefusee = Boolean(contenu.refusee || contenu.motifRefus);
+
   const statut: StatutAttestation = (
     ["BROUILLON", "VALIDEE", "GENERE", "ARCHIVEE"] as StatutAttestation[]
   ).includes(a.statut)
@@ -76,6 +79,10 @@ function normalize(a: any): Attestation {
       : a.demandeurNom,
     createdAt: a.createdAt ? String(a.createdAt).slice(0, 10) : undefined,
     pdfUrl: a.pdfUrl ?? undefined,
+    motifRefus: contenu.motifRefus || undefined,
+    dateRefus: contenu.dateRefus ? String(contenu.dateRefus).slice(0, 10) : undefined,
+    isRefusee,
+    demandeReference: contenu.demandeReference || undefined,
   };
 }
 
@@ -108,6 +115,7 @@ export const attestationsApi = {
         decretDate: data.decretDate,
         datePriseService: data.datePriseService,
         numeroOrdre: data.numeroOrdre,
+        demandeReference: data.demandeReference,
       }),
     });
     const item = raw?.data && !Array.isArray(raw.data) ? raw.data : raw;
@@ -119,6 +127,19 @@ export const attestationsApi = {
     const raw = await apiFetch<any>(
       `/dashboard/attestations/${encodeURIComponent(id)}/valider`,
       { method: "POST" }
+    );
+    const item = raw?.data && !Array.isArray(raw.data) ? raw.data : raw;
+    return normalize(item);
+  },
+
+  /** Refus Chef SRB */
+  refuser: async (id: string, motif: string): Promise<Attestation> => {
+    const raw = await apiFetch<any>(
+      `/dashboard/attestations/${encodeURIComponent(id)}/refuser`,
+      {
+        method: "POST",
+        body: JSON.stringify({ motif }),
+      }
     );
     const item = raw?.data && !Array.isArray(raw.data) ? raw.data : raw;
     return normalize(item);

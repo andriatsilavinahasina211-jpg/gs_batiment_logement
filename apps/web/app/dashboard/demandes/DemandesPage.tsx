@@ -452,6 +452,8 @@ if (
           datePriseService: att.datePriseService,
 
           numeroOrdre: att.numeroOrdre,
+
+          demandeReference: demande.reference,
         });
       } catch (err: any) {
         console.error(err);

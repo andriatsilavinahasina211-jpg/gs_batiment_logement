@@ -2,12 +2,15 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { CreateAttestationDto } from './dto/create-attestation.dto';
-import { TypeAttestation, StatutAttestation, StatutDemande } from '@prisma/client';
+import { TypeAttestation, StatutAttestation, StatutDemande, TypeDemande } from '@prisma/client';
 import { v4 as uuidv4 } from 'uuid';
 import { getAttestationTemplate } from './templates/attestation.template';
+import { DemandeService } from 'src/demande/demande.service';
 
 const pdfMake = require('pdfmake/build/pdfmake');
 const pdfFonts = require('pdfmake/build/vfs_fonts');
@@ -25,7 +28,11 @@ const pdfMakeInstance = pdfMake;
 
 @Injectable()
 export class AttestationService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    @Inject(forwardRef(() => DemandeService))
+    private demandeService: DemandeService,
+  ) {}
 
   async create(dto: CreateAttestationDto, user: any) {
     if (!dto.visaSuperieur) {
@@ -99,6 +106,7 @@ export class AttestationService {
         visaSuperieur: true,
         declarationHonneurLegalisee: true,
         contenu: {
+          demandeReference: dto.demandeReference ?? null,
           commentaire: dto.commentaire ?? null,
           dateDemande: new Date().toISOString(),
           type: dto.typeAttestation,
@@ -133,8 +141,8 @@ export class AttestationService {
     return attestation;
   }
 
-  /** Validation Chef → VALIDEE + dateGeneration */
-  async valider(id: string) {
+  /** Validation Chef → VALIDEE + dateGeneration + validation automatique de la Demande */
+  async valider(id: string, user?: any) {
     const attestation = await this.findOne(id);
 
     if (
@@ -144,7 +152,7 @@ export class AttestationService {
       throw new BadRequestException('Cette attestation est déjà validée');
     }
 
-    return this.prisma.attestation.update({
+    const updated = await this.prisma.attestation.update({
       where: { id },
       data: {
         statut: StatutAttestation.VALIDEE,
@@ -152,6 +160,128 @@ export class AttestationService {
       },
       include: { demandeur: true },
     });
+
+    // Synchronisation automatique : validation de la demande d'attestation
+    try {
+      const contenu = (attestation.contenu as any) || {};
+      let demande: any = null;
+
+      if (contenu.demandeReference) {
+        demande = await this.prisma.demande.findUnique({
+          where: { reference: contenu.demandeReference },
+        });
+      }
+
+      if (!demande) {
+        demande = await this.prisma.demande.findFirst({
+          where: {
+            demandeurId: attestation.demandeurId,
+            typeDemande: TypeDemande.ATTESTATION,
+            statut: { in: [StatutDemande.EN_ATTENTE, StatutDemande.EN_COURS] },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+      }
+
+      if (
+        demande &&
+        (demande.statut === StatutDemande.EN_ATTENTE ||
+          demande.statut === StatutDemande.EN_COURS)
+      ) {
+        await this.demandeService.updateStatut(
+          demande.reference,
+          StatutDemande.VALIDEE,
+          'Attestation validée par le Chef SRB',
+          user?.id ? Number(user.id) : undefined,
+        );
+      }
+    } catch (err) {
+      console.error(
+        '[AttestationService] Erreur lors de la synchronisation de validation de la demande:',
+        err,
+      );
+    }
+
+    return updated;
+  }
+
+  /** Refus Chef → ARCHIVEE / Refusée avec motif + refus automatique de la Demande */
+  async refuser(id: string, motif: string, user?: any) {
+    if (!motif || !motif.trim()) {
+      throw new BadRequestException(
+        'Le motif de refus est obligatoire pour motiver la décision.',
+      );
+    }
+
+    const attestation = await this.findOne(id);
+
+    if (
+      attestation.statut === StatutAttestation.VALIDEE ||
+      attestation.statut === StatutAttestation.GENERE
+    ) {
+      throw new BadRequestException(
+        'Une attestation déjà validée ou générée ne peut plus être refusée',
+      );
+    }
+
+    const contenu = (attestation.contenu as any) || {};
+    const updatedContenu = {
+      ...contenu,
+      refusee: true,
+      motifRefus: motif.trim(),
+      dateRefus: new Date().toISOString(),
+      refuseParId: user?.id ? Number(user.id) : null,
+    };
+
+    const updated = await this.prisma.attestation.update({
+      where: { id },
+      data: {
+        statut: StatutAttestation.ARCHIVEE,
+        contenu: updatedContenu,
+      },
+      include: { demandeur: true },
+    });
+
+    // Synchronisation automatique : rejet de la demande d'attestation
+    try {
+      let demande: any = null;
+      if (contenu.demandeReference) {
+        demande = await this.prisma.demande.findUnique({
+          where: { reference: contenu.demandeReference },
+        });
+      }
+
+      if (!demande) {
+        demande = await this.prisma.demande.findFirst({
+          where: {
+            demandeurId: attestation.demandeurId,
+            typeDemande: TypeDemande.ATTESTATION,
+            statut: { in: [StatutDemande.EN_ATTENTE, StatutDemande.EN_COURS] },
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+      }
+
+      if (
+        demande &&
+        (demande.statut === StatutDemande.EN_ATTENTE ||
+          demande.statut === StatutDemande.EN_COURS)
+      ) {
+        await this.demandeService.updateStatut(
+          demande.reference,
+          StatutDemande.REJETEE,
+          motif.trim(),
+          user?.id ? Number(user.id) : undefined,
+        );
+      }
+    } catch (err) {
+      console.error(
+        '[AttestationService] Erreur lors de la synchronisation de rejet de la demande:',
+        err,
+      );
+    }
+
+    return updated;
   }
 
   /** PDF — uniquement si VALIDEE ou GENERE */

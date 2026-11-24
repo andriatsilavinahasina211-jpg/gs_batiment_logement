@@ -18,6 +18,10 @@ export interface Attestation {
   demandeurNom?: string;
   createdAt?: string;
   pdfUrl?: string;
+  motifRefus?: string;
+  dateRefus?: string;
+  isRefusee?: boolean;
+  demandeReference?: string;
 }
 
 export type CreateAttestationPayload = {
@@ -31,4 +35,5 @@ export type CreateAttestationPayload = {
   decretDate?: string;
   datePriseService?: string;
   numeroOrdre?: string;
+  demandeReference?: string;
 };

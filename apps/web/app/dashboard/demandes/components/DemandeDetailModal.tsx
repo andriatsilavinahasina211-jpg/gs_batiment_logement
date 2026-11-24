@@ -401,13 +401,33 @@ export default function DemandeDetailModal({
             )}
 
             {metier?.attestation && (
-              <MetierSection title="Attestation">
+              <MetierSection title="Détails Attestation">
                 <InfoRow
-                  label="Type"
-                  value={String(
-                    metier.attestation.typeAttestation || "NON_LOGEMENT"
-                  )}
+                  label="Type d'attestation"
+                  value={
+                    metier.attestation.typeAttestation === "NON_OCCUPATION"
+                      ? "Non-occupation"
+                      : "Non-logement"
+                  }
                 />
+                {metier.attestation.civilite && (
+                  <InfoRow
+                    label="Civilité"
+                    value={metier.attestation.civilite}
+                  />
+                )}
+                {metier.attestation.decretNumero && (
+                  <InfoRow
+                    label="N° Décret de nomination"
+                    value={metier.attestation.decretNumero}
+                  />
+                )}
+                {metier.attestation.datePriseService && (
+                  <InfoRow
+                    label="Prise de service"
+                    value={formatDate(metier.attestation.datePriseService)}
+                  />
+                )}
               </MetierSection>
             )}
 

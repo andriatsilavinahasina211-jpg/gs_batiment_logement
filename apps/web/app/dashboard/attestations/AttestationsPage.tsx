@@ -5,6 +5,7 @@ import "./AttestationsPage.css";
 import type { Attestation, StatutAttestation, TypeAttestation } from "./types";
 import { attestationsApi } from "./api";
 import { useFeedback } from "../shared/feedback";
+import { getStoredUser } from "../../lib/auth";
 
 const statutConfig: Record<
   StatutAttestation,
@@ -41,24 +42,171 @@ function InfoRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+/* ───────────────── Modal refus ───────────────── */
+function RefuseAttestationModal({
+  attestation,
+  onClose,
+  onConfirm,
+  busy,
+}: {
+  attestation: Attestation;
+  onClose: () => void;
+  onConfirm: (motif: string) => void;
+  busy: boolean;
+}) {
+  const [motif, setMotif] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!motif.trim()) {
+      setError("Le motif de refus est obligatoire pour motiver la décision.");
+      return;
+    }
+    onConfirm(motif.trim());
+  };
+
+  return (
+    <div
+      className="attestations-modal-overlay"
+      onClick={onClose}
+      style={{ zIndex: 1100 }}
+    >
+      <div
+        className="attestations-detail-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: 480 }}
+      >
+        <div className="attestations-detail-header">
+          <div>
+            <h2 style={{ color: "#dc2626" }}>Refuser la demande d&apos;attestation</h2>
+            <p>
+              Réf. {attestation.reference}
+              {attestation.demandeurNom ? ` · ${attestation.demandeurNom}` : ""}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="attestations-detail-close"
+            onClick={onClose}
+          >
+            ×
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} style={{ padding: 20 }}>
+          <p
+            style={{
+              fontSize: 13,
+              color: "#475569",
+              marginBottom: 16,
+              lineHeight: 1.5,
+            }}
+          >
+            Veuillez indiquer le motif réglementaire du refus. Ce motif sera
+            enregistré, notifié au demandeur et mettra à jour la demande en
+            statut <strong>REJETÉE</strong>.
+          </p>
+
+          <div style={{ marginBottom: 16 }}>
+            <label
+              style={{
+                display: "block",
+                fontSize: 13,
+                fontWeight: 600,
+                color: "#1e293b",
+                marginBottom: 6,
+              }}
+            >
+              Motif du refus *
+            </label>
+            <textarea
+              rows={4}
+              value={motif}
+              onChange={(e) => {
+                setMotif(e.target.value);
+                if (error) setError(null);
+              }}
+              placeholder="Ex : Bénéfice d'un logement de fonction déjà actif, pièces justificatives manquantes ou non conformes..."
+              style={{
+                width: "100%",
+                padding: "10px 12px",
+                border: error ? "1px solid #ef4444" : "1px solid #cbd5e1",
+                borderRadius: 8,
+                fontSize: 13,
+                fontFamily: "inherit",
+                resize: "vertical",
+                outline: "none",
+                boxSizing: "border-box",
+              }}
+              autoFocus
+            />
+            {error && (
+              <p style={{ color: "#dc2626", fontSize: 12, marginTop: 4 }}>
+                {error}
+              </p>
+            )}
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+            <button
+              type="button"
+              className="attestations-btn-secondary"
+              onClick={onClose}
+              disabled={busy}
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              disabled={busy}
+              style={{
+                background: "#dc2626",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "8px 18px",
+                fontWeight: 600,
+                fontSize: 13,
+                cursor: busy ? "not-allowed" : "pointer",
+                opacity: busy ? 0.7 : 1,
+              }}
+            >
+              {busy ? "Traitement…" : "Confirmer le refus"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 /* ───────────────── Modal détail ───────────────── */
 function AttestationDetailModal({
   attestation,
   onClose,
   onValider,
+  onRefuserClick,
   onDownloadPdf,
   busy,
+  canValidate,
 }: {
   attestation: Attestation;
   onClose: () => void;
   onValider: (a: Attestation) => void;
+  onRefuserClick: (a: Attestation) => void;
   onDownloadPdf: (a: Attestation) => void;
   busy: boolean;
+  canValidate: boolean;
 }) {
-  const st = statutConfig[attestation.statut];
-  const canValider = attestation.statut === "BROUILLON";
+  const st = attestation.isRefusee
+    ? { label: "Refusée", color: "#dc2626", bg: "#fee2e2" }
+    : statutConfig[attestation.statut];
+
+  const canValider = attestation.statut === "BROUILLON" && !attestation.isRefusee;
   const canDownload =
-    attestation.statut === "VALIDEE" || attestation.statut === "GENERE";
+    !attestation.isRefusee &&
+    (attestation.statut === "VALIDEE" || attestation.statut === "GENERE");
 
   return (
     <div className="attestations-modal-overlay" onClick={onClose}>
@@ -88,6 +236,40 @@ function AttestationDetailModal({
 
         <div className="attestations-detail-body">
           <div className="attestations-detail-infos">
+            {attestation.isRefusee && (
+              <div
+                style={{
+                  background: "#fee2e2",
+                  border: "1px solid #fecaca",
+                  borderRadius: 8,
+                  padding: "12px 14px",
+                  marginBottom: 12,
+                }}
+              >
+                <div
+                  style={{
+                    fontWeight: 700,
+                    color: "#dc2626",
+                    fontSize: 13,
+                    marginBottom: 4,
+                  }}
+                >
+                  Demande d&apos;attestation refusée
+                </div>
+                <div style={{ fontSize: 13, color: "#991b1b" }}>
+                  <strong>Motif :</strong>{" "}
+                  {attestation.motifRefus || "Aucun motif spécifié"}
+                </div>
+                {attestation.dateRefus && (
+                  <div
+                    style={{ fontSize: 11, color: "#b91c1c", marginTop: 4 }}
+                  >
+                    Refusée le {formatDate(attestation.dateRefus)}
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="attestations-info-row">
               <span className="attestations-info-label">Statut</span>
               <span
@@ -97,6 +279,14 @@ function AttestationDetailModal({
                 {st.label}
               </span>
             </div>
+
+            {attestation.demandeReference && (
+              <InfoRow
+                label="Demande liée"
+                value={attestation.demandeReference}
+              />
+            )}
+
             <InfoRow
               label="Type"
               value={
@@ -128,15 +318,34 @@ function AttestationDetailModal({
           </div>
 
           <div className="attestations-detail-actions">
-            {canValider && (
-              <button
-                type="button"
-                className="attestations-btn-primary"
-                disabled={busy}
-                onClick={() => onValider(attestation)}
-              >
-                {busy ? "Validation…" : "Valider (Chef SRB)"}
-              </button>
+            {canValider && canValidate && (
+              <>
+                <button
+                  type="button"
+                  className="attestations-btn-primary"
+                  disabled={busy}
+                  onClick={() => onValider(attestation)}
+                >
+                  {busy ? "Validation…" : "✓ Valider (Chef SRB)"}
+                </button>
+                <button
+                  type="button"
+                  style={{
+                    background: "#fee2e2",
+                    color: "#dc2626",
+                    border: "1px solid #fecaca",
+                    borderRadius: 8,
+                    padding: "8px 16px",
+                    fontWeight: 700,
+                    fontSize: 13,
+                    cursor: "pointer",
+                  }}
+                  disabled={busy}
+                  onClick={() => onRefuserClick(attestation)}
+                >
+                  ✕ Refuser
+                </button>
+              </>
             )}
 
             {canDownload && (
@@ -178,7 +387,12 @@ export default function AttestationsPage() {
   const [filtreType, setFiltreType] = useState<string>("TOUS");
   const [currentPage, setCurrentPage] = useState(1);
   const [selected, setSelected] = useState<Attestation | null>(null);
+  const [refusingAttestation, setRefusingAttestation] = useState<Attestation | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const canValidate = ["CHEF_SRB", "ADMINISTRATEUR"].includes(
+    getStoredUser()?.role ?? ""
+  );
 
   const loadAttestations = useCallback(async () => {
     setLoading(true);
@@ -210,7 +424,11 @@ export default function AttestationsPage() {
         (a.demandeurNom || "").toLowerCase().includes(q);
 
       const matchStatut =
-        filtreStatut === "TOUS" || a.statut === filtreStatut;
+        filtreStatut === "TOUS"
+          ? true
+          : filtreStatut === "REFUSEE"
+          ? a.isRefusee
+          : !a.isRefusee && a.statut === filtreStatut;
       const matchType =
         filtreType === "TOUS" || a.typeAttestation === filtreType;
 
@@ -241,9 +459,36 @@ export default function AttestationsPage() {
       await attestationsApi.valider(a.id);
       setSelected(null);
       await loadAttestations();
-      toast.success("Attestation validée", `L\'attestation ${a.reference} a été validée avec succès.`);
+      toast.success(
+        "Attestation validée",
+        `L'attestation ${a.reference} et sa demande associée ont été validées.`
+      );
     } catch (e: unknown) {
       toast.error("Échec de la validation", e instanceof Error ? e.message : "Une erreur est survenue lors de la validation de l\'attestation.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleRefuser = async (motif: string) => {
+    if (!refusingAttestation) return;
+    setBusy(true);
+    try {
+      await attestationsApi.refuser(refusingAttestation.id, motif);
+      toast.success(
+        "Attestation refusée",
+        `L'attestation ${refusingAttestation.reference} et sa demande associée ont été refusées.`
+      );
+      setRefusingAttestation(null);
+      setSelected(null);
+      await loadAttestations();
+    } catch (e: unknown) {
+      toast.error(
+        "Échec du refus",
+        e instanceof Error
+          ? e.message
+          : "Une erreur est survenue lors du refus de l'attestation."
+      );
     } finally {
       setBusy(false);
     }
@@ -352,6 +597,7 @@ export default function AttestationsPage() {
               {label}
             </option>
           ))}
+          <option value="REFUSEE">Refusée</option>
         </select>
       </div>
 
@@ -377,7 +623,9 @@ export default function AttestationsPage() {
               </thead>
               <tbody>
                 {current.map((a) => {
-                  const st = statutConfig[a.statut];
+                  const st = a.isRefusee
+                    ? { label: "Refusée", color: "#dc2626", bg: "#fee2e2" }
+                    : statutConfig[a.statut];
                   return (
                     <tr key={a.id} onClick={() => setSelected(a)}>
                       <td className="attestations-td-strong">
@@ -464,7 +712,18 @@ export default function AttestationsPage() {
           attestation={selected}
           onClose={() => setSelected(null)}
           onValider={handleValider}
+          onRefuserClick={(a) => setRefusingAttestation(a)}
           onDownloadPdf={handleDownloadPdf}
+          busy={busy}
+          canValidate={canValidate}
+        />
+      )}
+
+      {refusingAttestation && (
+        <RefuseAttestationModal
+          attestation={refusingAttestation}
+          onClose={() => setRefusingAttestation(null)}
+          onConfirm={handleRefuser}
           busy={busy}
         />
       )}

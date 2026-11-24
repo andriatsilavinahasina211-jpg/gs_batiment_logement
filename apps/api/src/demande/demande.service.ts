@@ -8,6 +8,7 @@ import { CreateDemandeDto } from './dto/create-demande.dto';
 import { UpdateDemandeDto } from './dto/update-demande.dto';
 import {
   Notification,
+  StatutAttestation,
   StatutBien,
   StatutDemande,
   StatutTravaux,
@@ -349,6 +350,53 @@ export class DemandeService {
             demandeReference: reference,
           },
         });
+      }
+
+      // Synchronisation avec l'attestation si la demande est de type ATTESTATION
+      if (existing.typeDemande === TypeDemande.ATTESTATION) {
+        const attestations = await tx.attestation.findMany({
+          where: {
+            demandeurId: existing.demandeurId,
+            statut: StatutAttestation.BROUILLON,
+          },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        const target =
+          attestations.find(
+            (a) => (a.contenu as any)?.demandeReference === reference,
+          ) || attestations[0];
+
+        if (target) {
+          if (statut === StatutDemande.VALIDEE) {
+            await tx.attestation.update({
+              where: { id: target.id },
+              data: {
+                statut: StatutAttestation.VALIDEE,
+                dateGeneration: new Date(),
+                contenu: {
+                  ...((target.contenu as any) || {}),
+                  demandeReference: reference,
+                },
+              },
+            });
+          } else if (statut === StatutDemande.REJETEE) {
+            await tx.attestation.update({
+              where: { id: target.id },
+              data: {
+                statut: StatutAttestation.ARCHIVEE,
+                contenu: {
+                  ...((target.contenu as any) || {}),
+                  demandeReference: reference,
+                  refusee: true,
+                  motifRefus: motifRefus || 'Demande d\'attestation rejetée',
+                  dateRefus: new Date().toISOString(),
+                  refuseParId: valideurId || null,
+                },
+              },
+            });
+          }
+        }
       }
 
       // Créer une notification automatique pour le demandeur ou créateur

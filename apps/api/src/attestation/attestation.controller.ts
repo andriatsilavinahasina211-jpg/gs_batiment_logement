@@ -59,7 +59,19 @@ export class AttestationController {
   @UseGuards(RolesGuard)
   @Roles('CHEF_SRB', 'ADMINISTRATEUR')
   @ApiOperation({ summary: 'Valider l\'attestation (Chef SRB)' })
-  valider(@Param('id') id: string) {
-    return this.attestationService.valider(id);
+  valider(@Param('id') id: string, @Req() req: any) {
+    return this.attestationService.valider(id, req?.user);
+  }
+
+  @Post(':id/refuser')
+  @UseGuards(RolesGuard)
+  @Roles('CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Refuser l\'attestation avec motif (Chef SRB)' })
+  refuser(
+    @Param('id') id: string,
+    @Body('motif') motif: string,
+    @Req() req: any,
+  ) {
+    return this.attestationService.refuser(id, motif, req?.user);
   }
 }
