@@ -1,8 +1,8 @@
-/* ══════════════════════════════════════════════════════════════════
-   Palette MEF / DGBF — Styles Dashboard
-   Or principal : #C9A227 | Or foncé : #A67C00 | Or clair : #F5E6C8
+﻿/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   Palette MEF / DGBF â€” Styles Dashboard
+   Or principal : #C9A227 | Or foncÃ© : #A67C00 | Or clair : #F5E6C8
    Vert   : #1a7a3c  |  Rouge : #be1e2d
-══════════════════════════════════════════════════════════════════ */
+â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 :root {
   --mef-gold: #C9A227;
   --mef-gold-dark: #A67C00;
@@ -17,11 +17,11 @@
   --mef-border: #e2e8f0;
   --mef-text: #0f172a;
   --mef-muted: #64748b;
-  --mef-sidebar: #f8fafc;          /* ← même couleur que le dashboard */
+  --mef-sidebar: #f8fafc;          /* â† mÃªme couleur que le dashboard */
   --mef-sidebar-bdr: #e2e8f0;
 }
 
-/* ── Reset + Police unique ── */
+/* â”€â”€ Reset + Police unique â”€â”€ */
 .db * {
   box-sizing: border-box;
   margin: 0;
@@ -29,7 +29,7 @@
   font-family: var(--font-primary, 'Montserrat', system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif) !important;
 }
 
-/* ── Layout principal ── */
+/* â”€â”€ Layout principal â”€â”€ */
 .db {
   display: flex;
   height: 100vh;
@@ -37,7 +37,7 @@
   overflow: hidden;
 }
 
-/* ── Sidebar ── */
+/* â”€â”€ Sidebar â”€â”€ */
 .db-sidebar {
   width: 210px;
   background: var(--mef-sidebar);
@@ -49,7 +49,7 @@
   z-index: 50;
 }
 
-/* ── Sidebar nav ── */
+/* â”€â”€ Sidebar nav â”€â”€ */
 .db-nav {
   background: none;
   border: none;
@@ -113,7 +113,7 @@
   text-overflow: ellipsis;
 }
 
-/* ── Nav group label ── */
+/* â”€â”€ Nav group label â”€â”€ */
 .db-group-lbl {
   font-size: 9.5px;
   font-weight: 700;
@@ -123,7 +123,7 @@
   padding: 14px 10px 4px;
 }
 
-/* ── Nav badge ── */
+/* â”€â”€ Nav badge â”€â”€ */
 .db-badge {
   margin-left: auto;
   background: var(--mef-gold);
@@ -136,7 +136,7 @@
   text-align: center;
 }
 
-/* ── Buttons ── */
+/* â”€â”€ Buttons â”€â”€ */
 .db-btn-ol {
   cursor: pointer;
   transition: background .15s, box-shadow .15s, border-color .15s;
@@ -177,7 +177,7 @@
   background: var(--mef-gold-bg) !important;
 }
 
-/* ── Header Actions ── */
+/* â”€â”€ Header Actions â”€â”€ */
 .db-header-actions {
   display: flex;
   align-items: center;
@@ -240,7 +240,7 @@
   border: 1.5px solid #fff;
 }
 
-/* ── Sidebar User Footer ── */
+/* â”€â”€ Sidebar User Footer â”€â”€ */
 .db-sidebar-footer {
   padding: 12px 14px;
   border-top: 1px solid var(--mef-sidebar-bdr);
@@ -281,7 +281,7 @@
   color: #b91c1c;
 }
 
-/* ── Logo area ── */
+/* â”€â”€ Logo area â”€â”€ */
 .db-logo-area {
   padding: 18px 12px 14px;
   border-bottom: 1px solid var(--mef-sidebar-bdr);
@@ -313,7 +313,7 @@
   margin-top: 2px;
 }
 
-/* ── Scrollbar sidebar ── */
+/* â”€â”€ Scrollbar sidebar â”€â”€ */
 .db-sidebar-nav::-webkit-scrollbar {
   width: 4px;
 }
@@ -327,7 +327,7 @@
   border-radius: 4px;
 }
 
-/* ── Stats KPI Grid ── */
+/* â”€â”€ Stats KPI Grid â”€â”€ */
 .db-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -352,14 +352,14 @@
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
 }
 
-/* ── Main content ── */
+/* â”€â”€ Main content â”€â”€ */
 .db-main {
   flex: 1;
   overflow: auto;
   padding: 24px 26px 30px;
 }
 
-/* ── Two column grid ── */
+/* â”€â”€ Two column grid â”€â”€ */
 .db-grid {
   display: grid;
   grid-template-columns: 1fr 310px;
@@ -367,7 +367,7 @@
   align-items: start;
 }
 
-/* ── Hamburger (caché par défaut) ── */
+/* â”€â”€ Hamburger (cachÃ© par dÃ©faut) â”€â”€ */
 .db-hamburger {
   display: none;
   width: 40px;
@@ -382,7 +382,7 @@
   color: var(--mef-muted);
 }
 
-/* ── Overlay mobile ── */
+/* â”€â”€ Overlay mobile â”€â”€ */
 .db-overlay {
   display: none;
   position: fixed;
@@ -524,16 +524,16 @@
   }
 }
 
-/* Très petit écran */
+/* TrÃ¨s petit Ã©cran */
 @media (max-width: 480px) {
   .db-main {
     padding: 12px 8px 20px !important;
   }
 }
 
-/* ══════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    Modern Notification & Feedback Animations
-   ══════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 @keyframes slideInRight {
   from {
     opacity: 0;
@@ -589,9 +589,9 @@
   animation: pulseGlow 2s infinite ease-in-out;
 }
 
-/* ══════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    DASHBOARD EQUA-STYLE CARD ENHANCEMENTS
-   ══════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .eq-stat-card {
   position: relative;
   overflow: hidden;
@@ -632,9 +632,9 @@
   transform: translateX(2px);
 }
 
-/* ══════════════════════════════════════════════════════════════════
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
    DASHBOARD RESPONSIVE LAYOUT BREAKPOINTS
-   ══════════════════════════════════════════════════════════════════ */
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 .eq-top-stats-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -654,7 +654,7 @@
   align-items: center;
 }
 
-/* Tablette & écrans moyens (≤ 1024px) */
+/* Tablette & Ã©crans moyens (â‰¤ 1024px) */
 @media (max-width: 1024px) {
   .eq-top-stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -667,7 +667,7 @@
   }
 }
 
-/* Mobile & petits écrans (≤ 768px) */
+/* Mobile & petits Ã©crans (â‰¤ 768px) */
 @media (max-width: 768px) {
   .eq-top-stats-grid {
     grid-template-columns: 1fr !important;
@@ -703,26 +703,22 @@
 }
 
 
-/* ── Gestion du bouton de fermeture (X) ── */
+/* -- Bouton fermeture sidebar (X) -- */
 
-/* 1️⃣ Sur les écrans larges (> 768 px) – le X n’est plus affiché */
+/* Desktop (>= 768px) : masquer completement le bouton X */
 @media (min-width: 768px) {
-  .sidebar-toggle {
+  .db-sidebar-close-btn {
     display: none !important;
   }
 }
 
-/* 2️⃣ Sur les petits écrans (mobile) – le X reste visible, mais on enlève le
-   fond jaune qui l’encadre. */
+/* Mobile (< 768px) : garder le X visible, sans fond jaune */
 @media (max-width: 767px) {
-  .sidebar-toggle {
-    background: transparent;   /* supprime l’encadré jaune */
-    border: none;
-    padding: 0;
-  }
-
-  .sidebar-toggle svg {
-    /* garde uniquement l’icône, aucune couleur de fond supplémentaire */
-    fill: currentColor;
+  .db-sidebar-close-btn {
+    background: transparent !important;
+    border: none !important;
+    padding: 4px !important;
+    box-shadow: none !important;
+    outline: none !important;
   }
 }
