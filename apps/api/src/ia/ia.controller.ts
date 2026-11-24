@@ -1,4 +1,4 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
 import { IaService } from './ia.service';
 import { JwtAuthGuard } from 'src/auth/guards/jwt-auth.guard';
@@ -28,5 +28,12 @@ export class IaController {
   @ApiOperation({ summary: 'Indicateurs synthétiques pour le dashboard (tous rôles)' })
   getIndicateurs() {
     return this.iaService.getIndicateursDashboard();
+  }
+
+  @Get('recommandation/:reference')
+  @Roles('CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Recommandation IA décisionnelle pour une demande spécifique' })
+  getRecommandationDemande(@Param('reference') reference: string) {
+    return this.iaService.evaluerDemandeDecision(reference);
   }
 }

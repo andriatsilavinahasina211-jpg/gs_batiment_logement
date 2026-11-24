@@ -497,4 +497,132 @@ export class IaService {
       ),
     };
   }
+
+  /**
+   * Recommandation IA Décisionnelle pour une Demande spécifique
+   * Analyse réglementaire en temps réel pour éclairer la décision du Chef SRB
+   */
+  async evaluerDemandeDecision(reference: string) {
+    const demande = await this.prisma.demande.findUnique({
+      where: { reference },
+      include: {
+        demandeur: true,
+        bien: true,
+        piecesJointes: true,
+        validations: true,
+      },
+    });
+
+    if (!demande) {
+      return {
+        avis: 'NEUTRE',
+        confiance: 0,
+        synthese: 'Demande non trouvée',
+        pointsPositifs: [],
+        alertes: ['Référence de demande inexistante.'],
+        recommandation: 'Vérifier la référence du dossier.',
+      };
+    }
+
+    const alertes: string[] = [];
+    const pointsPositifs: string[] = [];
+    let score = 100;
+
+    // 1. RÈGLE D'UNICITÉ D'AVANTAGE LOGEMENT (Section 6.5.3.5)
+    if (demande.typeDemande === 'OCCUPATION' || demande.typeDemande === 'BAIL') {
+      const occupationsExistantes = await this.prisma.occupation.findMany({
+        where: {
+          occupantId: demande.demandeurId,
+          statut: { in: ['EN_COURS', 'APPROUVE'] },
+        },
+        include: { bien: true },
+      });
+
+      const bauxExistants = await this.prisma.bail.findMany({
+        where: {
+          locataireId: demande.demandeurId,
+          statut: 'EN_COURS',
+        },
+      });
+
+      if (occupationsExistantes.length > 0) {
+        alertes.push(
+          `Violation Unicité d'Avantage : Le demandeur occupe déjà le bien ${occupationsExistantes[0].bienNumero} (${occupationsExistantes[0].bien?.nomDuBien || ''}).`,
+        );
+        score -= 50;
+      } else if (bauxExistants.length > 0) {
+        alertes.push(
+          `Violation Unicité d'Avantage : Le demandeur bénéficie déjà d'un bail actif (#${bauxExistants[0].numeroBail}).`,
+        );
+        score -= 50;
+      } else {
+        pointsPositifs.push('Respect du principe d’unicité : Aucun autre logement administratif ni bail actif détecté.');
+      }
+    }
+
+    // 2. DISPONIBILITÉ DU BIEN DEMANDÉ
+    if (demande.bienNumero && demande.typeDemande === 'OCCUPATION') {
+      if (demande.bien?.statut === 'OCCUPE') {
+        alertes.push(
+          `Indisponibilité : Le bien demandé (${demande.bien.nomDuBien || demande.bienNumero}) est actuellement marqué comme DÉJÀ OCCUPÉ.`,
+        );
+        score -= 40;
+      } else {
+        pointsPositifs.push(`Bien disponible : Le bien ${demande.bien?.nomDuBien || demande.bienNumero} est libre d'affectation.`);
+      }
+    }
+
+    // 3. TRAVAUX ET CONFORMITÉ CIRCULAIRE N°813 (Quitus N-1)
+    if (demande.typeDemande === 'TRAVAUX') {
+      const anneePrecedente = new Date().getFullYear() - 1;
+      const quitusN1 = demande.bienNumero
+        ? await this.prisma.quitus.findFirst({
+            where: {
+              bienNumero: demande.bienNumero,
+              annee: anneePrecedente,
+              statut: 'VALIDE',
+            },
+          })
+        : null;
+
+      if (!quitusN1) {
+        alertes.push(
+          `Alerte Circulaire N°813 : Aucun Quitus de recensement trouvé pour l'année ${anneePrecedente} sur ce bien. Risque de rejet par le Contrôle Financier.`,
+        );
+        score -= 30;
+      } else {
+        pointsPositifs.push(`Conformité Circulaire N°813 : Quitus ${anneePrecedente} présent et régulier.`);
+      }
+    }
+
+    // 4. ATTESTATION DE NON-LOGEMENT (Annexe 39 & Visa Supérieur)
+    if (demande.typeDemande === 'ATTESTATION') {
+      pointsPositifs.push('Demande d’attestation : Vérifier la déclaration légalisée auprès du Firaisana (Annexe 39).');
+    }
+
+    // 5. SYNTHÈSE & RECOMMANDATION FINALE
+    let avis: 'FAVORABLE' | 'RESERVE' | 'DEFAVORABLE' = 'FAVORABLE';
+    let recommandation = 'Dossier réglementairement recevable. Validation recommandée.';
+
+    if (score < 50) {
+      avis = 'DEFAVORABLE';
+      recommandation = 'Risque de non-conformité élevé. Refus ou demande de régularisation fortement conseillé.';
+    } else if (score < 80) {
+      avis = 'RESERVE';
+      recommandation = 'Dossier recevable avec réserves. Une vérification préalable des pièces justificatives est conseillée.';
+    }
+
+    return {
+      reference,
+      typeDemande: demande.typeDemande,
+      score: Math.max(10, score),
+      avis,
+      recommandation,
+      pointsPositifs,
+      alertes,
+      demandeur: demande.demandeur
+        ? `${demande.demandeur.prenom} ${demande.demandeur.nom} (${demande.demandeur.matricule || 'N/A'})`
+        : 'Demandeur non renseigné',
+    };
+  }
 }

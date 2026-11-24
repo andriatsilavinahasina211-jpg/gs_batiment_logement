@@ -1,7 +1,22 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import { Demande, StatutDemande, TypeDemande } from "../types/demande";
+
+interface RecommendationIA {
+  reference: string;
+  typeDemande: string;
+  score: number;
+  avis: "FAVORABLE" | "RESERVE" | "DEFAVORABLE";
+  recommandation: string;
+  pointsPositifs: string[];
+  alertes: string[];
+  demandeur: string;
+}
+
+const API_URL = (
+  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
+).replace(/\/$/, "");
 
 const statutConfig: Record<
   StatutDemande,
@@ -89,6 +104,35 @@ export default function DemandeDetailModal({
     [demande.description]
   );
 
+  const [iaData, setIaData] = useState<RecommendationIA | null>(null);
+  const [loadingIa, setLoadingIa] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    async function fetchRecommendation() {
+      if (!demande.reference) return;
+      try {
+        setLoadingIa(true);
+        const token = localStorage.getItem("token") || localStorage.getItem("access_token");
+        const res = await fetch(`${API_URL}/dashboard/ia/recommandation/${encodeURIComponent(demande.reference)}`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (isMounted) setIaData(data);
+        }
+      } catch (err) {
+        console.error("Erreur récupération recommandation IA :", err);
+      } finally {
+        if (isMounted) setLoadingIa(false);
+      }
+    }
+    fetchRecommendation();
+    return () => {
+      isMounted = false;
+    };
+  }, [demande.reference]);
+
   return (
     <div className="demandes-modal-overlay" onClick={onClose}>
       <div
@@ -115,6 +159,109 @@ export default function DemandeDetailModal({
         </div>
 
         <div className="demandes-detail-body">
+          {/* ── BANDEAU RECOMMANDATION IA DÉCISIONNELLE ── */}
+          {loadingIa && (
+            <div
+              style={{
+                marginBottom: 16,
+                padding: "10px 14px",
+                borderRadius: 10,
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                fontSize: 12,
+                color: "#64748b",
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <span>🤖</span> Analyse décisionnelle en temps réel par l&apos;IA en cours...
+            </div>
+          )}
+
+          {iaData && !loadingIa && (
+            <div
+              style={{
+                marginBottom: 18,
+                padding: "14px 16px",
+                borderRadius: 12,
+                background:
+                  iaData.avis === "FAVORABLE"
+                    ? "#f0fdf4"
+                    : iaData.avis === "DEFAVORABLE"
+                    ? "#fef2f2"
+                    : "#fffbeb",
+                border: `1px solid ${
+                  iaData.avis === "FAVORABLE"
+                    ? "#bbf7d0"
+                    : iaData.avis === "DEFAVORABLE"
+                    ? "#fecaca"
+                    : "#fde68a"
+                }`,
+                boxShadow: "0 2px 6px rgba(0,0,0,0.02)",
+              }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>🤖</span>
+                  <span
+                    style={{
+                      fontSize: 12.5,
+                      fontWeight: 800,
+                      color:
+                        iaData.avis === "FAVORABLE"
+                          ? "#15803d"
+                          : iaData.avis === "DEFAVORABLE"
+                          ? "#b91c1c"
+                          : "#b45309",
+                      letterSpacing: ".2px",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Avis Décisionnel IA : Recommandation {iaData.avis}
+                  </span>
+                </div>
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    padding: "2px 8px",
+                    borderRadius: 12,
+                    background: "#ffffff",
+                    border: "1px solid #cbd5e1",
+                    color: "#334155",
+                  }}
+                >
+                  Indice de conformité : {iaData.score}%
+                </span>
+              </div>
+
+              <p style={{ fontSize: 12.5, fontWeight: 600, color: "#1e293b", margin: "4px 0 8px" }}>
+                {iaData.recommandation}
+              </p>
+
+              {iaData.pointsPositifs && iaData.pointsPositifs.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2, marginBottom: 4 }}>
+                  {iaData.pointsPositifs.map((pt, idx) => (
+                    <div key={idx} style={{ fontSize: 11, color: "#166534", display: "flex", alignItems: "center", gap: 4 }}>
+                      <span>✓</span> {pt}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {iaData.alertes && iaData.alertes.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 2, marginTop: 4 }}>
+                  {iaData.alertes.map((alt, idx) => (
+                    <div key={idx} style={{ fontSize: 11, color: "#991b1b", display: "flex", alignItems: "center", gap: 4 }}>
+                      <span>⚠️</span> {alt}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="demandes-detail-infos">
             <div className="demandes-info-row">
               <span className="demandes-info-label">Statut</span>
