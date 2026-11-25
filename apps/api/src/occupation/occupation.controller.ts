@@ -34,7 +34,7 @@ import { OccupationStatus } from '@prisma/client';
 import type { Response } from 'express';
 import { log } from 'console';
 
-@ApiTags('Occupation & Libération')
+@ApiTags('Occupation & LibÃ©ration')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('dashboard/occupations')
@@ -45,9 +45,9 @@ export class OccupationController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles('AGENT', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Créer une nouvelle occupation (Agent / Admin)' })
-  @ApiResponse({ status: 201, description: 'Occupation créée avec succès' })
+  @Roles('AGENT', 'CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'CrÃ©er une nouvelle occupation (Agent / Chef SRB / Admin)' })
+  @ApiResponse({ status: 201, description: 'Occupation crÃ©Ã©e avec succÃ¨s' })
   async create(
     @Body() createOccupationDto: CreateOccupationDto,
     @Req() req: any,
@@ -73,7 +73,7 @@ export class OccupationController {
   @Post('alertes/run')
   @UseGuards(RolesGuard)
   @Roles('ADMINISTRATEUR', 'CHEF_SRB')
-  @ApiOperation({ summary: 'Exécuter manuellement le contrôle fin de jouissance' })
+  @ApiOperation({ summary: 'ExÃ©cuter manuellement le contrÃ´le fin de jouissance' })
   async runAlertes() {
     return this.occupationService.handleEndOfOccupancyAlerts();
   }
@@ -82,7 +82,7 @@ export class OccupationController {
   @UseGuards(RolesGuard)
   @Roles('CHEF_SRB', 'ADMINISTRATEUR')
   @ApiOperation({
-    summary: 'Valider une occupation → APPROUVE + Demande VALIDEE',
+    summary: 'Valider une occupation â†’ APPROUVE + Demande VALIDEE',
   })
   async validerOccupation(
     @Param('numeroOccupation') numeroOccupation: string,
@@ -94,15 +94,15 @@ export class OccupationController {
 
   //recuperer une occupation par le numero
   @Get(':numeroOccupation')
-  @ApiOperation({ summary: 'Récupérer une occupation par son numéro' })
+  @ApiOperation({ summary: 'RÃ©cupÃ©rer une occupation par son numÃ©ro' })
   async findOne(@Param('numeroOccupation') numeroOccupation: string) {
     return this.occupationService.findOne(numeroOccupation);
   }
 
   @Patch(':numeroOccupation')
   @UseGuards(RolesGuard)
-  @Roles('AGENT', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Mettre à jour une occupation (Agent / Admin)' })
+  @Roles('AGENT', 'CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Mettre Ã  jour une occupation (Agent / Chef SRB / Admin)' })
   async update(
     @Param('numeroOccupation') numeroOccupation: string,
     @Body() updateDto: any,
@@ -118,12 +118,12 @@ export class OccupationController {
     return this.occupationService.remove(numeroOccupation);
   }
 
-  // ====================== LIBÉRATION ======================
+  // ====================== LIBÃ‰RATION ======================
 
   @Post(':numeroOccupation/liberation/demander')
   @UseGuards(RolesGuard)
-  @Roles('AGENT', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Demander la libération d’une occupation (Agent / Admin)' })
+  @Roles('AGENT', 'CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Demander la libÃ©ration dâ€™une occupation (Agent / Admin)' })
   async demanderLiberation(
     @Param('numeroOccupation') numeroOccupation: string,
     @Body() dto: DemandeLiberationDto,
@@ -135,7 +135,7 @@ export class OccupationController {
   @Post(':numeroOccupation/liberation/valider')
   @UseGuards(RolesGuard)
   @Roles('CHEF_SRB', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Valider la libération (Chef SRB / Admin)' })
+  @ApiOperation({ summary: 'Valider la libÃ©ration (Chef SRB / Admin)' })
   async validerLiberation(
     @Param('numeroOccupation') numeroOccupation: string,
     @Body() dto: ValiderLiberationDto,
@@ -144,10 +144,10 @@ export class OccupationController {
     return this.occupationService.validerLiberation(numeroOccupation, dto, req.user);
   }
 
-  // ====================== ÉTATS DES LIEUX ======================
+  // ====================== Ã‰TATS DES LIEUX ======================
 
   @Patch(':numeroOccupation/etat-entree')
-  @ApiOperation({ summary: 'Enregistrer l’état des lieux d’entrée' })
+  @ApiOperation({ summary: 'Enregistrer lâ€™Ã©tat des lieux dâ€™entrÃ©e' })
   async updateEtatEntree(
     @Param('numeroOccupation') numeroOccupation: string,
     @Body() formulaire: any,
@@ -162,7 +162,7 @@ export class OccupationController {
   }
 
   @Patch(':numeroOccupation/etat-sortie')
-  @ApiOperation({ summary: 'Enregistrer l’état des lieux de sortie' })
+  @ApiOperation({ summary: 'Enregistrer lâ€™Ã©tat des lieux de sortie' })
   async updateEtatSortie(
     @Param('numeroOccupation') numeroOccupation: string,
     @Body() formulaire: any,
@@ -176,12 +176,12 @@ export class OccupationController {
     );
   }
 
-  // ====================== GÉNÉRATION PDF ======================
+  // ====================== GÃ‰NÃ‰RATION PDF ======================
 
   @Post(':numeroOccupation/etat-des-lieux/pdf')
-  @ApiOperation({ summary: 'Générer le PDF de l\'état des lieux' })
+  @ApiOperation({ summary: 'GÃ©nÃ©rer le PDF de l\'Ã©tat des lieux' })
   @ApiConsumes('application/json')
-  @ApiResponse({ status: 200, description: 'PDF généré avec succès' })
+  @ApiResponse({ status: 200, description: 'PDF gÃ©nÃ©rÃ© avec succÃ¨s' })
   async generateEtatDesLieuxPdf(
     @Param('numeroOccupation') numeroOccupation: string,
     @Body() formulaire: EtatDesLieuxDto,
@@ -200,7 +200,7 @@ export class OccupationController {
   // ====================== ALERTES & STATUT ======================
 
   // @Get('alertes/fin-proche')
-  // @ApiOperation({ summary: 'Récupérer les occupations proches de la fin de jouissance' })
+  // @ApiOperation({ summary: 'RÃ©cupÃ©rer les occupations proches de la fin de jouissance' })
   // async getFinProche() {
   //   return this.occupationService.getOccupationsFinProche();
   // }

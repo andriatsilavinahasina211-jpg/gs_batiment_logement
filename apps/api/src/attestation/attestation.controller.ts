@@ -24,8 +24,8 @@ export class AttestationController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles('AGENT', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Créer une attestation (Agent / Admin)' })
+  @Roles('AGENT', 'CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Créer une attestation (Agent / Chef SRB / Admin)' })
   create(@Body() dto: CreateAttestationDto, @Req() req: any) {
     return this.attestationService.create(dto, req.user);
   }

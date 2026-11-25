@@ -55,7 +55,7 @@ export class RecensementController {
   }
 
   @Patch('campagnes/:id/archiver')
-  @Roles('ADMINISTRATEUR')
+  @Roles('CHEF_SRB', 'ADMINISTRATEUR')
   @ApiOperation({ summary: 'Archiver une campagne clôturée' })
   archiverCampagne(@Param('id') id: string) {
     return this.recensementService.archiverCampagne(id);

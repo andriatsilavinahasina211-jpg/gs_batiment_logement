@@ -30,8 +30,8 @@ export class DemandeController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles('AGENT', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Soumettre une nouvelle demande (Agent / Admin)' })
+  @Roles('AGENT', 'CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Soumettre une nouvelle demande (Agent / Chef SRB / Admin)' })
   create(
     @Body() dto: CreateDemandeDto,
     @Request() req: { user: { id: number } },
@@ -60,8 +60,8 @@ export class DemandeController {
 
   @Patch(':referenceDemande')
   @UseGuards(RolesGuard)
-  @Roles('AGENT', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Mettre à jour une demande (Agent / Admin)' })
+  @Roles('AGENT', 'CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Mettre à jour une demande (Agent / Chef SRB / Admin)' })
   update(
     @Param('referenceDemande') referenceDemande: string,
     @Body() dto: UpdateDemandeDto,
@@ -94,8 +94,8 @@ export class DemandeController {
 
   @Delete(':referenceDemande')
   @UseGuards(RolesGuard)
-  @Roles('ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Supprimer une demande (Admin uniquement)' })
+  @Roles('CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Supprimer une demande (Admin / Chef SRB)' })
   remove(@Param('referenceDemande') referenceDemande: string) {
     return this.demandeService.remove(referenceDemande);
   }

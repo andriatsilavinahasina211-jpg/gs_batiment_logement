@@ -30,8 +30,8 @@ export class PiecesJointesController {
 
   @Post('upload')
   @UseGuards(RolesGuard)
-  @Roles('AGENT', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Uploader un fichier — Agent / Admin uniquement' })
+  @Roles('AGENT', 'CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Uploader un fichier — Agent / Chef SRB / Admin' })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {

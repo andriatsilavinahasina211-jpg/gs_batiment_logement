@@ -36,8 +36,8 @@ export class BailController {
 
   @Post()
   @UseGuards(RolesGuard)
-  @Roles('AGENT', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Créer un nouveau bail (Agent / Admin)' })
+  @Roles('AGENT', 'CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Créer un nouveau bail (Agent / Chef SRB / Admin)' })
   create(@Body() dto: CreateBailDto, @Req() req: any) {
     return this.bailService.create(dto, req.user);
   }
@@ -56,8 +56,8 @@ export class BailController {
 
   @Patch(':numeroBail')
   @UseGuards(RolesGuard)
-  @Roles('AGENT', 'ADMINISTRATEUR')
-  @ApiOperation({ summary: 'Mettre à jour un bail (Agent / Admin)' })
+  @Roles('AGENT', 'CHEF_SRB', 'ADMINISTRATEUR')
+  @ApiOperation({ summary: 'Mettre à jour un bail (Agent / Chef SRB / Admin)' })
   update(
     @Param('numeroBail') numeroBail: string,
     @Body() dto: UpdateBailDto,
